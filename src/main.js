@@ -251,17 +251,6 @@ function renderWorkspace() {
         </div>
       </div>
 
-      <!-- Video Controls (if video) -->
-      ${isVideo && res ? `
-        <div class="video-playback-bar">
-          <button class="btn btn-secondary btn-sm" id="btn-toggle-play">
-            <i data-lucide="${state.isVideoPlaying ? 'pause' : 'play'}" style="width: 14px; height: 14px;"></i>
-            <span>${state.isVideoPlaying ? 'Pause Sync' : 'Play Sync'}</span>
-          </button>
-          <span class="file-meta-text">Synchronized Dual-Stream Playback</span>
-        </div>
-      ` : ''}
-
       <!-- Verified Forensic Specs Panel -->
       <div class="specs-grid">
         <div class="spec-box">
@@ -491,26 +480,23 @@ function attachEventListeners() {
     });
   }
 
-  // Video Synchronized Play/Pause
-  const btnTogglePlay = document.querySelector('#btn-toggle-play');
-  if (btnTogglePlay) {
-    btnTogglePlay.addEventListener('click', () => {
-      const vOrig = document.querySelector('#video-orig');
-      const vProc = document.querySelector('#video-proc');
-      if (vOrig && vProc) {
-        if (state.isVideoPlaying) {
-          vOrig.pause();
-          vProc.pause();
-          state.isVideoPlaying = false;
-        } else {
-          vProc.currentTime = vOrig.currentTime;
-          vOrig.play();
-          vProc.play();
-          state.isVideoPlaying = true;
-        }
-        renderApp();
+  // Automatic Video Dual-Stream Lockstep Synchronization
+  const vOrig = document.querySelector('#video-orig');
+  const vProc = document.querySelector('#video-proc');
+  if (vOrig && vProc) {
+    let isSyncing = false;
+    vOrig.addEventListener('play', () => { if (vProc.paused) vProc.play().catch(() => {}); });
+    vOrig.addEventListener('pause', () => { if (!vProc.paused) vProc.pause(); });
+    vOrig.addEventListener('timeupdate', () => {
+      if (!isSyncing && Math.abs(vOrig.currentTime - vProc.currentTime) > 0.03) {
+        isSyncing = true;
+        vProc.currentTime = vOrig.currentTime;
+        setTimeout(() => { isSyncing = false; }, 20);
       }
     });
+    vOrig.addEventListener('seeking', () => { vProc.currentTime = vOrig.currentTime; });
+    vProc.addEventListener('play', () => { if (vOrig.paused) vOrig.play().catch(() => {}); });
+    vProc.addEventListener('pause', () => { if (!vOrig.paused) vOrig.pause(); });
   }
 
   // Accordion Toggle
