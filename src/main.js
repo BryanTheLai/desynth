@@ -347,10 +347,7 @@ async function runProcessing() {
   try {
     if (state.fileType === 'video') {
       const result = await processVideo(state.originalVideo, {
-        grainAmount: Number(state.settings.grainAmount),
-        applyVignette: state.settings.applyVignette,
-        disruptLatents: state.settings.disruptLatents,
-        targetFps: state.settings.targetFps
+        file: state.originalFile
       }, (prog) => {
         state.progressPercent = prog;
         const fill = document.querySelector('.progress-bar-fill');
