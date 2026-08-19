@@ -63,9 +63,9 @@ const state = {
   isVideoPlaying: true,
   settings: {
     cameraPreset: 'sony_a7iv',
-    grainAmount: 14,
-    applyVignette: true,
-    applyChromaticAberration: true,
+    grainAmount: 2, // Default to ultra-subtle sub-perceptual (0-8)
+    applyVignette: false,
+    applyChromaticAberration: false,
     disruptLatents: true,
     targetFps: 30
   }
@@ -115,7 +115,7 @@ function renderApp() {
     <!-- Minimal Footer -->
     <footer class="footer">
       <div>
-        <span>DESYNTH — Zero server upload. Open client-side image & video forensics.</span>
+        <span>DESYNTH — Zero server upload. Lossless client-side media forensics.</span>
       </div>
       <div>
         <a href="https://stackifier.com" target="_blank" rel="noopener noreferrer" class="footer-link">
@@ -139,7 +139,7 @@ function renderHeroAndDropzone() {
   return `
     <div class="hero-header">
       <h1>De-synthesize AI media.</h1>
-      <p>Strip C2PA provenance, disrupt latent diffusion harmonics, and inject authentic camera sensor physics for images and videos — directly in your browser.</p>
+      <p>Strip C2PA provenance, disrupt latent diffusion harmonics, and inject authentic camera signatures for images & videos with 100% crystal-clear visual quality.</p>
     </div>
 
     <div class="dropzone-card" id="dropzone">
@@ -157,7 +157,7 @@ function renderHeroAndDropzone() {
       <div class="dropzone-badges">
         <span class="badge-tag">No Server Upload</span>
         <span class="badge-tag">C2PA Stripped</span>
-        <span class="badge-tag">Dynamic PRNU Grain</span>
+        <span class="badge-tag">Lossless Fidelity</span>
         <span class="badge-tag">Hardware EXIF</span>
       </div>
     </div>
@@ -202,7 +202,7 @@ function renderWorkspace() {
             <span>New</span>
           </button>
           
-          <button class="btn btn-primary btn-sm" id="btn-download" ${state.isProcessing ? 'disabled' : ''} title="Download sanitized file">
+          <button class="btn btn-primary btn-sm" id="btn-download" ${state.isProcessing ? 'disabled' : ''} title="Download clean media">
             <i data-lucide="download" style="width: 14px; height: 14px;"></i>
             <span>Download Clean ${isVideo ? (res ? res.extension.toUpperCase() : 'Video') : 'JPG'}</span>
           </button>
@@ -213,7 +213,7 @@ function renderWorkspace() {
       ${state.isProcessing ? `
         <div class="processing-banner">
           <div class="processing-info">
-            <span>De-synthesizing ${isVideo ? 'video frames & temporal grain' : 'image pixels'}...</span>
+            <span>De-synthesizing ${isVideo ? 'video frames losslessly' : 'image pixels'}...</span>
             <span class="font-mono">${state.progressPercent}%</span>
           </div>
           <div class="progress-bar-track">
@@ -273,8 +273,8 @@ function renderWorkspace() {
           <span class="spec-box-value">${preset.lens}</span>
         </div>
         <div class="spec-box">
-          <span class="spec-box-label">Temporal Noise</span>
-          <span class="spec-box-value">PRNU ${state.settings.grainAmount > 0 ? 'Active' : 'Bypassed'}</span>
+          <span class="spec-box-label">Micro-Dither</span>
+          <span class="spec-box-value">${state.settings.grainAmount === 0 ? 'Pure Lossless' : 'Sub-Perceptual'}</span>
         </div>
         <div class="spec-box">
           <span class="spec-box-label">C2PA Manifest</span>
@@ -287,7 +287,7 @@ function renderWorkspace() {
         <button class="accordion-trigger ${state.isAccordionOpen ? 'is-open' : ''}" id="accordion-toggle">
           <div class="accordion-title-box">
             <i data-lucide="sliders-horizontal" style="width: 15px; height: 15px;"></i>
-            <span>Advanced Optics & Sensor Tuning</span>
+            <span>Advanced Settings & Tuning</span>
           </div>
           <i data-lucide="chevron-down" class="accordion-chevron" style="width: 15px; height: 15px;"></i>
         </button>
@@ -305,23 +305,19 @@ function renderWorkspace() {
             </div>
 
             <div class="setting-item">
-              <label for="grain-range">PRNU Sensor Grain: <span id="grain-val">${state.settings.grainAmount}</span></label>
-              <input type="range" id="grain-range" class="range-input" min="0" max="30" value="${state.settings.grainAmount}" />
+              <label for="grain-range">Micro-Dither Level: <span id="grain-val">${state.settings.grainAmount}</span> (0 = Pure Lossless)</label>
+              <input type="range" id="grain-range" class="range-input" min="0" max="8" step="1" value="${state.settings.grainAmount}" />
             </div>
 
             <div class="setting-item">
               <label>Optical Physics</label>
               <div class="toggle-group">
                 <input type="checkbox" id="toggle-vignette" ${state.settings.applyVignette ? 'checked' : ''} />
-                <label for="toggle-vignette" class="toggle-label">Lens Vignette (-0.2 EV)</label>
+                <label for="toggle-vignette" class="toggle-label">Lens Vignette (-0.1 EV)</label>
               </div>
               <div class="toggle-group">
                 <input type="checkbox" id="toggle-ca" ${state.settings.applyChromaticAberration ? 'checked' : ''} />
                 <label for="toggle-ca" class="toggle-label">Lateral Chromatic Aberration</label>
-              </div>
-              <div class="toggle-group">
-                <input type="checkbox" id="toggle-latents" ${state.settings.disruptLatents ? 'checked' : ''} />
-                <label for="toggle-latents" class="toggle-label">Fourier Latent Disruption</label>
               </div>
             </div>
           </div>
@@ -557,13 +553,6 @@ function attachEventListeners() {
   if (toggleCA) {
     toggleCA.addEventListener('change', (e) => {
       state.settings.applyChromaticAberration = e.target.checked;
-    });
-  }
-
-  const toggleLatents = document.querySelector('#toggle-latents');
-  if (toggleLatents) {
-    toggleLatents.addEventListener('change', (e) => {
-      state.settings.disruptLatents = e.target.checked;
     });
   }
 
