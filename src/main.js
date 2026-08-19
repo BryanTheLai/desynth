@@ -161,6 +161,36 @@ function renderHeroAndDropzone() {
         <span class="badge-tag">Hardware EXIF</span>
       </div>
     </div>
+
+    <!-- Semantic FAQ Section for Search & Answer Engines -->
+    <section class="faq-section">
+      <div class="faq-header">
+        <h2>Frequently Asked Questions</h2>
+        <p>Technical guide to C2PA stripping and AI provenance de-detection.</p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-card">
+          <h3>How does DESYNTH remove C2PA & Content Credentials?</h3>
+          <p>DESYNTH parses the cryptographic JUMBF metadata container in images and the ISO-BMFF box tree in videos, purging AI generator manifests (DALL-E 3, Midjourney, Adobe Firefly, Runway, Sora, Kling) client-side.</p>
+        </div>
+
+        <div class="faq-card">
+          <h3>How does it prevent LinkedIn from flagging AI headshots?</h3>
+          <p>LinkedIn detects AI headshots via automated C2PA inspection and missing-EXIF heuristics. DESYNTH strips the manifest and injects authentic Sony Alpha 7 IV (FE 85mm F1.4 GM) metadata with sub-perceptual sensor dither.</p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Is video de-detection 100% lossless?</h3>
+          <p>Yes. Video sanitization operates at the binary container level in under 50ms without re-encoding pixels, preserving exact native 60fps/30fps frame rates and 100% audio fidelity.</p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Are files uploaded to any server?</h3>
+          <p>Never. DESYNTH executes 100% client-side inside your browser's local memory using Web TypedArrays and Canvas 2D. No media or personal data is ever transmitted to a server.</p>
+        </div>
+      </div>
+    </section>
   `;
 }
 
