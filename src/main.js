@@ -15,9 +15,14 @@ import {
   Cpu,
   Eye,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Video,
+  Play,
+  Pause,
+  Film
 } from 'lucide';
 import { processImage, loadImageFromFile, CAMERA_PRESETS } from './desynthEngine.js';
+import { processVideo, loadVideoFromFile } from './desynthVideoEngine.js';
 
 // Icons bundle for Lucide
 const ICONS = {
@@ -35,25 +40,34 @@ const ICONS = {
   Cpu,
   Eye,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Video,
+  Play,
+  Pause,
+  Film
 };
 
 // Global App State
 const state = {
-  originalImage: null,
+  fileType: null, // 'image' | 'video'
   originalFile: null,
   originalDataUrl: null,
+  originalImage: null,
+  originalVideo: null,
   processedResult: null,
   isProcessing: false,
+  progressPercent: 0,
   splitPosition: 50, // in percent
   isDragging: false,
   isAccordionOpen: false,
+  isVideoPlaying: true,
   settings: {
     cameraPreset: 'sony_a7iv',
     grainAmount: 14,
     applyVignette: true,
     applyChromaticAberration: true,
-    disruptLatents: true
+    disruptLatents: true,
+    targetFps: 30
   }
 };
 
@@ -95,13 +109,13 @@ function renderApp() {
 
     <!-- Main Container -->
     <main class="main-container">
-      ${!state.originalImage ? renderHeroAndDropzone() : renderWorkspace()}
+      ${!state.originalFile ? renderHeroAndDropzone() : renderWorkspace()}
     </main>
 
     <!-- Minimal Footer -->
     <footer class="footer">
       <div>
-        <span>DESYNTH — Zero server upload. Open client-side image forensics.</span>
+        <span>DESYNTH — Zero server upload. Open client-side image & video forensics.</span>
       </div>
       <div>
         <a href="https://stackifier.com" target="_blank" rel="noopener noreferrer" class="footer-link">
@@ -124,26 +138,27 @@ function renderApp() {
 function renderHeroAndDropzone() {
   return `
     <div class="hero-header">
-      <h1>De-synthesize AI imagery.</h1>
-      <p>Strip C2PA provenance, disrupt latent diffusion harmonics, and inject authentic camera sensor physics — directly in your browser.</p>
+      <h1>De-synthesize AI media.</h1>
+      <p>Strip C2PA provenance, disrupt latent diffusion harmonics, and inject authentic camera sensor physics for images and videos — directly in your browser.</p>
     </div>
 
     <div class="dropzone-card" id="dropzone">
-      <input type="file" id="file-input" class="file-input-hidden" accept="image/jpeg,image/png,image/webp" />
+      <input type="file" id="file-input" class="file-input-hidden" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" />
       
       <div class="dropzone-icon-box">
         <i data-lucide="upload" style="width: 24px; height: 24px;"></i>
       </div>
 
       <div class="dropzone-text">
-        <h3>Drop an AI image here or click to browse</h3>
-        <p>Supports JPG, PNG, WebP up to 50MB</p>
+        <h3>Drop an AI image or video here</h3>
+        <p>Supports JPG, PNG, WebP, MP4, WebM, MOV</p>
       </div>
 
       <div class="dropzone-badges">
         <span class="badge-tag">No Server Upload</span>
         <span class="badge-tag">C2PA Stripped</span>
-        <span class="badge-tag">Sony A7IV EXIF</span>
+        <span class="badge-tag">Dynamic PRNU Grain</span>
+        <span class="badge-tag">Hardware EXIF</span>
       </div>
     </div>
   `;
@@ -155,9 +170,10 @@ function renderHeroAndDropzone() {
 function renderWorkspace() {
   const file = state.originalFile;
   const res = state.processedResult;
-  const fileName = file ? file.name : 'image.jpg';
+  const fileName = file ? file.name : 'media_file';
   const origSize = file ? formatBytes(file.size) : '';
   const newSize = res ? formatBytes(res.sizeBytes) : '';
+  const isVideo = state.fileType === 'video';
   const preset = CAMERA_PRESETS[state.settings.cameraPreset] || CAMERA_PRESETS.sony_a7iv;
 
   return `
@@ -166,7 +182,7 @@ function renderWorkspace() {
       <div class="workspace-header">
         <div class="file-info-group">
           <div class="file-icon">
-            <i data-lucide="image-icon" style="width: 20px; height: 20px;"></i>
+            <i data-lucide="${isVideo ? 'video' : 'image-icon'}" style="width: 20px; height: 20px;"></i>
           </div>
           <div class="file-details">
             <span class="file-name-text" title="${fileName}">${fileName}</span>
@@ -175,31 +191,53 @@ function renderWorkspace() {
               <span>•</span>
               <span>${origSize}</span>
               ${res ? `<span>→</span> <span>${newSize}</span>` : ''}
+              ${isVideo ? `<span>•</span> <span class="badge-tag" style="padding: 1px 5px;">VIDEO</span>` : ''}
             </div>
           </div>
         </div>
 
         <div class="workspace-actions">
-          <button class="btn btn-secondary btn-sm" id="btn-reset" title="Process another image">
+          <button class="btn btn-secondary btn-sm" id="btn-reset" title="Process another file">
             <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i>
             <span>New</span>
           </button>
           
-          <button class="btn btn-primary btn-sm" id="btn-download" title="Download sanitized image with authentic EXIF">
+          <button class="btn btn-primary btn-sm" id="btn-download" ${state.isProcessing ? 'disabled' : ''} title="Download sanitized file">
             <i data-lucide="download" style="width: 14px; height: 14px;"></i>
-            <span>Download Clean JPG</span>
+            <span>Download Clean ${isVideo ? (res ? res.extension.toUpperCase() : 'Video') : 'JPG'}</span>
           </button>
         </div>
       </div>
 
+      <!-- Processing Progress Bar (For Video) -->
+      ${state.isProcessing ? `
+        <div class="processing-banner">
+          <div class="processing-info">
+            <span>De-synthesizing ${isVideo ? 'video frames & temporal grain' : 'image pixels'}...</span>
+            <span class="font-mono">${state.progressPercent}%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: ${state.progressPercent}%;"></div>
+          </div>
+        </div>
+      ` : ''}
+
       <!-- Before / After Split Slider -->
       <div class="comparison-wrapper" id="comparison-slider" style="--split-pos: ${state.splitPosition}%;">
         <div class="comparison-container">
-          <!-- Background: Original AI Image -->
-          <img src="${state.originalDataUrl}" class="comp-img" alt="Original AI Image" />
+          <!-- Background: Original AI Media -->
+          ${isVideo ? `
+            <video id="video-orig" src="${state.originalDataUrl}" class="comp-img" autoplay loop muted playsinline></video>
+          ` : `
+            <img src="${state.originalDataUrl}" class="comp-img" alt="Original AI Image" />
+          `}
           
-          <!-- Foreground: Processed Authentic Image (Clipped) -->
-          ${res ? `<img src="${res.dataUrl}" class="comp-img comp-img-processed" alt="Desynthesized Image" />` : ''}
+          <!-- Foreground: Processed Authentic Media (Clipped to Right) -->
+          ${res ? (isVideo ? `
+            <video id="video-proc" src="${res.dataUrl}" class="comp-img comp-img-processed" autoplay loop muted playsinline></video>
+          ` : `
+            <img src="${res.dataUrl}" class="comp-img comp-img-processed" alt="Desynthesized Image" />
+          `) : ''}
 
           <!-- Floating Badges -->
           <div class="comp-label comp-label-left">Original (AI)</div>
@@ -213,19 +251,30 @@ function renderWorkspace() {
         </div>
       </div>
 
+      <!-- Video Controls (if video) -->
+      ${isVideo && res ? `
+        <div class="video-playback-bar">
+          <button class="btn btn-secondary btn-sm" id="btn-toggle-play">
+            <i data-lucide="${state.isVideoPlaying ? 'pause' : 'play'}" style="width: 14px; height: 14px;"></i>
+            <span>${state.isVideoPlaying ? 'Pause Sync' : 'Play Sync'}</span>
+          </button>
+          <span class="file-meta-text">Synchronized Dual-Stream Playback</span>
+        </div>
+      ` : ''}
+
       <!-- Verified Forensic Specs Panel -->
       <div class="specs-grid">
         <div class="spec-box">
-          <span class="spec-box-label">Camera Signature</span>
+          <span class="spec-box-label">Camera Profile</span>
           <span class="spec-box-value">${preset.name}</span>
         </div>
         <div class="spec-box">
-          <span class="spec-box-label">Optical Profile</span>
+          <span class="spec-box-label">Optical Signature</span>
           <span class="spec-box-value">${preset.lens}</span>
         </div>
         <div class="spec-box">
-          <span class="spec-box-label">Exposure & ISO</span>
-          <span class="spec-box-value">1/${preset.exposureTime[1]}s • f/${preset.fNumber[0]/preset.fNumber[1]} • ISO ${preset.iso}</span>
+          <span class="spec-box-label">Temporal Noise</span>
+          <span class="spec-box-value">PRNU ${state.settings.grainAmount > 0 ? 'Active' : 'Bypassed'}</span>
         </div>
         <div class="spec-box">
           <span class="spec-box-label">C2PA Manifest</span>
@@ -290,25 +339,43 @@ function renderWorkspace() {
 }
 
 /**
- * Process the loaded image with current settings
+ * Process the loaded image or video
  */
 async function runProcessing() {
-  if (!state.originalImage) return;
+  if (!state.originalFile) return;
 
   state.isProcessing = true;
-  try {
-    const result = await processImage(state.originalImage, {
-      cameraPreset: state.settings.cameraPreset,
-      grainAmount: Number(state.settings.grainAmount),
-      applyVignette: state.settings.applyVignette,
-      applyChromaticAberration: state.settings.applyChromaticAberration,
-      disruptLatents: state.settings.disruptLatents
-    });
+  state.progressPercent = 0;
+  renderApp();
 
-    state.processedResult = result;
+  try {
+    if (state.fileType === 'video') {
+      const result = await processVideo(state.originalVideo, {
+        grainAmount: Number(state.settings.grainAmount),
+        applyVignette: state.settings.applyVignette,
+        disruptLatents: state.settings.disruptLatents,
+        targetFps: state.settings.targetFps
+      }, (prog) => {
+        state.progressPercent = prog;
+        const fill = document.querySelector('.progress-bar-fill');
+        const text = document.querySelector('.processing-info .font-mono');
+        if (fill) fill.style.width = `${prog}%`;
+        if (text) text.textContent = `${prog}%`;
+      });
+      state.processedResult = result;
+    } else {
+      const result = await processImage(state.originalImage, {
+        cameraPreset: state.settings.cameraPreset,
+        grainAmount: Number(state.settings.grainAmount),
+        applyVignette: state.settings.applyVignette,
+        applyChromaticAberration: state.settings.applyChromaticAberration,
+        disruptLatents: state.settings.disruptLatents
+      });
+      state.processedResult = result;
+    }
   } catch (err) {
     console.error('Processing failed:', err);
-    alert('An error occurred during image processing.');
+    alert('An error occurred during media processing.');
   } finally {
     state.isProcessing = false;
     renderApp();
@@ -316,37 +383,55 @@ async function runProcessing() {
 }
 
 /**
- * Handle File Selection
+ * Handle File Selection (Image or Video)
  */
 async function handleFile(file) {
-  if (!file || !file.type.startsWith('image/')) {
-    alert('Please select a valid image file (JPG, PNG, WebP).');
+  if (!file) return;
+
+  const isImg = file.type.startsWith('image/');
+  const isVid = file.type.startsWith('video/');
+
+  if (!isImg && !isVid) {
+    alert('Please select a valid image (JPG, PNG, WebP) or video (MP4, WebM, MOV).');
     return;
   }
 
   state.originalFile = file;
+  state.fileType = isVid ? 'video' : 'image';
+  state.splitPosition = 50;
+  state.isProcessing = true;
+  renderApp();
+
   try {
-    const img = await loadImageFromFile(file);
-    state.originalImage = img;
-    state.originalDataUrl = img.src;
-    state.splitPosition = 50;
+    if (isVid) {
+      const { video, url } = await loadVideoFromFile(file);
+      state.originalVideo = video;
+      state.originalDataUrl = url;
+    } else {
+      const img = await loadImageFromFile(file);
+      state.originalImage = img;
+      state.originalDataUrl = img.src;
+    }
     await runProcessing();
   } catch (err) {
-    console.error('Failed to load image:', err);
-    alert('Failed to load the selected image.');
+    console.error('Failed to load media file:', err);
+    alert('Failed to load the selected file.');
+    state.isProcessing = false;
+    renderApp();
   }
 }
 
 /**
  * Trigger clean file download
  */
-function downloadCleanImage() {
+function downloadCleanFile() {
   if (!state.processedResult || !state.processedResult.blob) return;
 
-  const originalName = state.originalFile ? state.originalFile.name : 'image';
+  const originalName = state.originalFile ? state.originalFile.name : 'media';
   const dotIndex = originalName.lastIndexOf('.');
   const baseName = dotIndex !== -1 ? originalName.substring(0, dotIndex) : originalName;
-  const downloadName = `${baseName}-authentic.jpg`;
+  const ext = state.fileType === 'video' ? (state.processedResult.extension || 'mp4') : 'jpg';
+  const downloadName = `${baseName}-authentic.${ext}`;
 
   const url = URL.createObjectURL(state.processedResult.blob);
   const a = document.createElement('a');
@@ -394,17 +479,44 @@ function attachEventListeners() {
   // Action buttons
   const btnDownload = document.querySelector('#btn-download');
   if (btnDownload) {
-    btnDownload.addEventListener('click', downloadCleanImage);
+    btnDownload.addEventListener('click', downloadCleanFile);
   }
 
   const btnReset = document.querySelector('#btn-reset');
   if (btnReset) {
     btnReset.addEventListener('click', () => {
-      state.originalImage = null;
+      if (state.originalDataUrl && state.fileType === 'video') {
+        URL.revokeObjectURL(state.originalDataUrl);
+      }
       state.originalFile = null;
+      state.fileType = null;
+      state.originalImage = null;
+      state.originalVideo = null;
       state.originalDataUrl = null;
       state.processedResult = null;
       renderApp();
+    });
+  }
+
+  // Video Synchronized Play/Pause
+  const btnTogglePlay = document.querySelector('#btn-toggle-play');
+  if (btnTogglePlay) {
+    btnTogglePlay.addEventListener('click', () => {
+      const vOrig = document.querySelector('#video-orig');
+      const vProc = document.querySelector('#video-proc');
+      if (vOrig && vProc) {
+        if (state.isVideoPlaying) {
+          vOrig.pause();
+          vProc.pause();
+          state.isVideoPlaying = false;
+        } else {
+          vProc.currentTime = vOrig.currentTime;
+          vOrig.play();
+          vProc.play();
+          state.isVideoPlaying = true;
+        }
+        renderApp();
+      }
     });
   }
 
