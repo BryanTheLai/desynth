@@ -3,15 +3,90 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DESYNTH — by Stackifier</title>
-    <meta name="description" content="Client-side AI image de-detection. Strip C2PA metadata, break latent diffusion harmonics, and inject authentic camera sensor physics." />
     
-    <!-- Modern Typography: Inter + JetBrains Mono -->
+    <!-- Primary Meta Tags -->
+    <title>DESYNTH — Free Client-Side AI Image & Video De-Detection Tool</title>
+    <meta name="title" content="DESYNTH — Free Client-Side AI Image & Video De-Detection Tool" />
+    <meta name="description" content="Free, 100% private in-browser utility to strip C2PA metadata, remove AI provenance manifests, disrupt latent diffusion harmonics, and inject authentic camera EXIF for images and videos." />
+    <meta name="keywords" content="remove c2pa metadata, c2pa stripper, bypass ai image detector, remove ai watermark runway, midjourney c2pa removal, sora ai video de detection, content credentials remover, sony a7iv exif injection" />
+    <link rel="canonical" href="https://desynth.stackifier.com/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://desynth.stackifier.com/" />
+    <meta property="og:title" content="DESYNTH — Free Client-Side AI Image & Video De-Detection Tool" />
+    <meta property="og:description" content="Strip C2PA provenance, disrupt latent diffusion harmonics, and inject authentic camera signatures for images & videos. 100% client-side, zero server upload." />
+    <meta property="og:image" content="https://desynth.stackifier.com/favicon.svg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://desynth.stackifier.com/" />
+    <meta property="twitter:title" content="DESYNTH — Free Client-Side AI Image & Video De-Detection Tool" />
+    <meta property="twitter:description" content="Strip C2PA provenance, disrupt latent diffusion harmonics, and inject authentic camera signatures for images & videos. 100% client-side, zero server upload." />
+
+    <!-- Typography: Inter + JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2318181B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><circle cx='8.5' cy='8.5' r='1.5'/><path d='m21 15-5-5L5 21'/></svg>" />
+
+    <!-- Structured Data: Schema.org WebApplication + FAQPage for Google & LLM Answer Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "DESYNTH",
+          "url": "https://desynth.stackifier.com",
+          "applicationCategory": "MultimediaApplication",
+          "operatingSystem": "All (Web Browser)",
+          "browserRequirements": "Requires JavaScript",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "author": {
+            "@type": "Organization",
+            "name": "Stackifier",
+            "url": "https://stackifier.com"
+          },
+          "description": "Free client-side tool to strip C2PA metadata, remove AI video/image generator signatures, and inject authentic camera hardware EXIF."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How do I remove C2PA Content Credentials from AI images?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Drop your image into DESYNTH at https://desynth.stackifier.com. The tool automatically removes C2PA JUMBF manifests, strips synthetic metadata, and injects authentic Sony Alpha 7 IV hardware EXIF tags directly in your browser without uploading to any server."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How to remove AI metadata from Runway, Sora, or Kling videos?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Upload your MP4 or MOV file to DESYNTH. It executes instant lossless ISO-BMFF binary container sanitization, stripping C2PA and XMP generator UUIDs while preserving 100% of your video frame rate and audio quality."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Are my files uploaded to a remote server?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. DESYNTH operates 100% client-side inside your browser's local memory using Web TypedArrays and Canvas 2D. No media or personal data is ever transmitted to a server."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="app"></div>
